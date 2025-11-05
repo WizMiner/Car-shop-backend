@@ -1,7 +1,9 @@
-const path = require('path');
-const express = require('express');
-const cors = require('cors');
-const  sequelize  = require('./config/database');
+const path = require("path");
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const { createDatabase } = require("./config/database.js");
+const { syncDB } = require("./models/index.js");
 
 // Initialize Express App
 const app = express();
@@ -9,18 +11,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const routes = require('./routes');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api', routes);
-
-
-
+const routes = require("./routes");
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api", routes);
 
 // Handle 404 - Route Not Found
-app.use('*', (req, res) => {
+app.use("*", (req, res) => {
   res.status(404).json({
-    status: 'error',
-    message: 'Route not found',
+    status: "error",
+    message: "Route not found",
   });
 });
 
@@ -28,26 +27,27 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Test database connection
-    await sequelize.authenticate();
-    console.log('✅ Database connected successfully');
+    console.log(
+      "Attempting to connect to database and create if not exists..."
+    );
+    await createDatabase();
 
-    // Sync all models
-    await sequelize.sync({ force: false });
-    console.log('✅ All models synced successfully');
+    console.log("Attempting to sync database tables with local models...");
+    await syncDB();
 
-    // Start Express server
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`✅ Contract Service running successfully on PORT: ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-    console.error(error);
+    console.error(
+      "❌ Critical Error: Failed to initialize database or start server."
+    );
+    console.error(error.message);
+    if (error.stack) console.error(error.stack);
     process.exit(1);
   }
 };
 
-// Start the app
 startServer();
 
 // ===============================================

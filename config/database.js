@@ -1,27 +1,44 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+// config/database.js
+const { Sequelize } = require("sequelize");
+const mysql = require("mysql2/promise");
+require("dotenv").config();
 
-// Create Sequelize instance
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: 'mysql',
-    logging: false,
-    pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    },
-    define: {
-      timestamps: true,
-      underscored: true
-    }
+const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+
+// ✅ Function to create database with utf8mb4
+const createDatabase = async () => {
+  try {
+    const connection = await mysql.createConnection({
+      host: DB_HOST,
+      user: DB_USER,
+      password: DB_PASSWORD,
+    });
+
+    // ✅ Create with utf8mb4
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+    );
+
+    console.log(`✅ Database '${DB_NAME}' is ready.`);
+    await connection.end();
+  } catch (error) {
+    console.error("❌ Database creation failed:", error.message);
+    throw error;
   }
-);
+};
 
-module.exports = sequelize;
+// ✅ Initialize Sequelize with utf8mb4
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  dialect: "mysql",
+  logging: false,
+  dialectOptions: {
+    charset: "utf8mb4",
+  },
+  define: {
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
+  },
+});
+
+module.exports = { sequelize, createDatabase };

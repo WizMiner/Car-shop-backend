@@ -44,29 +44,29 @@ exports.createProduct = async (req, res) => {
     if (!make || typeof make !== "string") {
       return res.status(400).json({ error: "Valid make is required" });
     }
-    if (
-      !year ||
-      typeof year !== "number" ||
-      year < 1900 ||
-      year > new Date().getFullYear() + 1
-    ) {
-      return res.status(400).json({ error: "Valid year is required" });
-    }
-    if (
-      !seatingCapacity ||
-      typeof seatingCapacity !== "number" ||
-      seatingCapacity < 1
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Valid seating capacity is required" });
-    }
-    if (!pricePerDay || typeof pricePerDay !== "number" || pricePerDay < 0) {
-      return res.status(400).json({ error: "Valid price per day is required" });
-    }
-    if (!ownerId || typeof ownerId !== "number" || ownerId < 1) {
-      return res.status(400).json({ error: "Valid owner ID is required" });
-    }
+    // if (
+    //   !year ||
+    //   typeof year !== "number" ||
+    //   year < 1900 ||
+    //   year > new Date().getFullYear() + 1
+    // ) {
+    //   return res.status(400).json({ error: "Valid year is required" });
+    // }
+    // if (
+    //   !seatingCapacity ||
+    //   typeof seatingCapacity !== "number" ||
+    //   seatingCapacity < 1
+    // ) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "Valid seating capacity is required" });
+    // }
+    // if (!pricePerDay || typeof pricePerDay !== "number" || pricePerDay < 0) {
+    //   return res.status(400).json({ error: "Valid price per day is required" });
+    // }
+    // if (!ownerId || typeof ownerId !== "number" || ownerId < 1) {
+    //   return res.status(400).json({ error: "Valid owner ID is required" });
+    // }
 
     // Check if owner exists and has correct role
     const owner = await User.findByPk(ownerId);
@@ -230,6 +230,45 @@ exports.getProductById = async (req, res) => {
 
     res.status(200).json(product);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const categoryId = parseInt(id, 10); // ensure it's a number
+
+    const { page, limit, offset } = getPaginationParams(req);
+
+    const { rows: products, count: totalCount } = await Product.findAndCountAll(
+      {
+        where: { categoryId },
+        include: [
+          {
+            model: User,
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: Category,
+            attributes: ["id", "name"],
+          },
+          {
+            model: Location,
+            attributes: ["id", "name"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit,
+        offset,
+      }
+    );
+
+    const meta = getPaginationMeta(page, limit, totalCount);
+
+    res.status(200).json({ products, meta });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };

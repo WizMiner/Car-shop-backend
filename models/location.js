@@ -1,6 +1,6 @@
 // models/Location.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // simple import
+const { DataTypes } = require("sequelize");
+const  {sequelize}  = require('../config/database');
 
 const Location = sequelize.define('Location', {
   name: {

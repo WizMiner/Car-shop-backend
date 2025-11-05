@@ -9,6 +9,7 @@ const { upload: uploadProduct } = createMulter('product');
 router.post('/', uploadProduct.array('images', 5), productController.createProduct);
 router.get('/', productController.getAllProducts);
 router.get('/:id', productController.getProductById);
+router.get('/category/:id', productController.getProductsByCategory);
 router.put('/:id', uploadProduct.array('images', 5), productController.updateProduct);
 router.delete('/:id', productController.deleteProduct);
 
