@@ -1,5 +1,5 @@
 const { DataTypes } = require("sequelize");
-const  {sequelize}  = require('../config/database');
+const { sequelize } = require("../config/database");
 
 const Service = sequelize.define(
   "Service",
@@ -19,6 +19,10 @@ const Service = sequelize.define(
     },
     price: {
       type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    image: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
     isActive: {

@@ -1,13 +1,19 @@
+const path = require('path');
+const { getPaginationParams, getPaginationMeta } = require('../utils/pagination');
 const { About } = require('../models/index');
 
 // CREATE ABOUT
 exports.createAbout = async (req, res) => {
   try {
-    const { title, description, image, vision, mission, values, isActive } = req.body;
+    const { title, description, vision, mission, values, isActive } = req.body;
 
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
     }
+     // ✅ Handle uploaded files (via multer)
+    const image = req.file
+      ? path.join("uploads", "abutes", req.file.filename)
+      : null;
     const about = await About.create({
       title,
       description,
@@ -27,14 +33,23 @@ exports.createAbout = async (req, res) => {
   }
 };
 
-// GET ALL ABOUT ENTRIES
 exports.getAllAbouts = async (req, res) => {
   try {
-    const abouts = await About.findAll({
-      order: [['createdAt', 'DESC']]
+    // 1️⃣ Extract pagination parameters
+    const { page, limit, offset } = getPaginationParams(req);
+
+    // 2️⃣ Fetch abouts with pagination
+    const { rows: abouts, count: totalCount } = await About.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
     });
 
-    res.status(200).json(abouts);
+    // 3️⃣ Generate pagination metadata
+    const meta = getPaginationMeta(page, limit, totalCount);
+
+    // 4️⃣ Return paginated results
+    res.status(200).json({ abouts, meta });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

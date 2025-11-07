@@ -1,3 +1,5 @@
+const path = require('path');
+const { getPaginationParams, getPaginationMeta } = require('../utils/pagination');
 const { Service } = require('../models/index');
 
 // CREATE SERVICE
@@ -8,11 +10,15 @@ exports.createService = async (req, res) => {
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
     }
+    const image = req.file
+      ? path.join("uploads", "services", req.file.filename)
+      : null;
 
     const service = await Service.create({
       name,
       description,
       price,
+      image,
       isActive: isActive !== undefined ? isActive : true
     });
 
@@ -25,18 +31,28 @@ exports.createService = async (req, res) => {
   }
 };
 
-// GET ALL SERVICES
 exports.getAllServices = async (req, res) => {
   try {
-    const services = await Service.findAll({
-      order: [['createdAt', 'DESC']]
+    // 1️⃣ Extract pagination parameters
+    const { page, limit, offset } = getPaginationParams(req);
+
+    // 2️⃣ Fetch services with pagination
+    const { rows: services, count: totalCount } = await Service.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
     });
 
-    res.status(200).json(services);
+    // 3️⃣ Generate pagination metadata
+    const meta = getPaginationMeta(page, limit, totalCount);
+
+    // 4️⃣ Return paginated results
+    res.status(200).json({ services, meta });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // GET SERVICE BY ID
 exports.getServiceById = async (req, res) => {
